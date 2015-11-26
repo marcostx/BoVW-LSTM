@@ -35,7 +35,7 @@ def process_image(imagename, resultname='temp.sift', dense=False):
         
         #check if linux or windows 
         if os.name == "posix":
-            cmmd = "./sift.py < " + imagename + " > " + resultname
+            cmmd = "./sift < " + imagename + " > " + resultname
         else:
             cmmd = "siftWin32 < " + imagename + " > " + resultname
         

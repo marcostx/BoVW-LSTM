@@ -6,8 +6,6 @@ import scipy.cluster.vq as vq
 import libsvm
 from cPickle import dump, HIGHEST_PROTOCOL
 import argparse
-import sys
-
 
 
 EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
@@ -112,23 +110,17 @@ if __name__ == '__main__':
         cat_path = join(datasetpath, cat)
         # name of each image file
         cat_files = get_imgfiles(cat_path)
-        # extracting features
         cat_features = extractSift(cat_files)
         all_files = all_files + cat_files
-        # refreshing features
         all_features.update(cat_features)
         cat_label[cat] = label
         for i in cat_files:   
             all_files_labels[i] = label
 
-    print "computing the visual words via k-means"
-    # passing to numpy array
+    print "CODEBOOK_FILEomputing the visual words via k-means"
     all_features_array = dict2numpy(all_features)
-    # numero de features
     nfeatures = all_features_array.shape[0]
-    # numero de clusters
     nclusters = int(sqrt(nfeatures))
-    
     codebook, distortion = vq.kmeans(all_features_array,
                                              nclusters,
                                              thresh=K_THRESH)
