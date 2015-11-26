@@ -16,7 +16,7 @@ The script `feature_extraction.py` will generate a visual vocabulary using the i
 
 The feature extraction consists of:
 
-1. Extracting local features of all the dataset dataset
+1. Extracting local features of all datasets
 2. Generating a codebook of visual words with clustering of the features
 3. Aggregating the histograms of the visual words for each of the traning images
 
