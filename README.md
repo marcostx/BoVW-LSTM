@@ -1,13 +1,15 @@
-Minimal Bag of Visual Words Image Classifier
+Bag of Visual Words Image Feature Generator
 ============================================
 
-Implementation of a content based image classifier using the [bag of visual words model][1] in Python. 
+This is an implementation of [bag of visual words model][1] in Python for feature extraction in video frames.
 
-As the name suggests, this is only a minimal example to illustrate the general workings of such a system. For a more advanced system that provides better performance check: https://github.com/shackenberg/phow_caltech101.py
+The current repository is just one layer of a framework for video classification, composed by:
+- Bag-of-Visual-Words ( Feature extraction for each frame) 
+- Long-Short Term Memory ( Maximizing Temporal Dependencies of features)
+- Softmax Classifier ( Classify the video, given the outputs of LSTM)
 
-The approach consists of two major steps called learning and classifying, represented in the files [`learn.py`][3] and [`classify.py`][4].
 
-The script `learn.py` will generate a visual vocabulary and train a classifier using a user provided set of already classified images.
+The script `learning.py` will generate a visual vocabulary using the images provided by process_video.py provided set of already classified images.
 After the learning phase `classify.py` will use the generated vocabulary and the trained classifier to predict the class for any image given to the script by the user.
 
 The learning consists of:
