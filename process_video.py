@@ -29,14 +29,17 @@ def doc():
 import numpy as np
 import cv2
 import sys
+from os import mkdir
+from os.path import splitext, exists
 
-# Opening the video
-cap = cv2.VideoCapture('test.mp4')
-# getting the class
+
+# getting the class of the video
 clss = sys.argv[1]
 # getting the name of video
 vname = sys.argv[2]
 
+# Opening the video
+cap = cv2.VideoCapture(vname)
 
 # Frame List
 frames_ = []
@@ -55,8 +58,13 @@ while(cap.isOpened()):
         break
 
 frame_count = 0
+if not exists('dataset/' + clss):
+    mkdir('dataset/' + clss)
+
+filename = splitext(vname)[0]
+    
 for i in frames_:
-	cv2.imwrite('dataset/' + clss + '/' + vname + str(frame_count) + '.png',i)
+	cv2.imwrite('dataset/' + clss + '/' + filename + str(frame_count) + '.png',i)
 	frame_count+=1
 
 cap.release()

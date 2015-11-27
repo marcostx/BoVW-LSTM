@@ -121,7 +121,9 @@ if __name__ == '__main__':
     if ncats < 1:
         print"Wrong path! \n"
         exit(1)
-  
+
+    # using a train dataset to generate the codebook
+
     all_files = []
     all_files_labels = {}
     
@@ -159,17 +161,26 @@ if __name__ == '__main__':
     f = open(datasetpath + CODEBOOK_FILE, 'wb')
     dump(codebook, f, protocol=HIGHEST_PROTOCOL)
 
-    print "compute the visual words histograms for each image"
-    all_word_histgrams = {}
-    for imagefname in all_features:
-        word_histgram = computeHistograms(codebook, all_features[imagefname])
-        all_word_histgrams[imagefname] = word_histgram
+    #print "compute the visual words histograms for each image"
+    #all_word_histgrams = {}
+    #for imagefname in all_features:
+    #    word_histgram = computeHistograms(codebook, all_features[imagefname])
+    #    all_word_histgrams[imagefname] = word_histgram
 
-    print "writing histograms to file"
-    writeHistogramsToFile(nclusters,
-                          all_files_labels,
-                          all_files,
-                          all_word_histgrams,
-                          datasetpath + HISTOGRAMS_FILE)
+    #print "writing histograms to file"
+    #writeHistogramsToFile(nclusters,
+    #                      all_files_labels,
+    #                      all_files,
+    #                      all_word_histgrams,
+    #                      datasetpath + HISTOGRAMS_FILE)
 
-    # Train LSTM
+    # test in a new sequence of video frames
+    print "Starting to generate histograms to video.."
+    if sys.argc < 2:
+    	print "Missing params! "
+    	exit(1)
+    # taking the video folder name
+    videofolder = sys.argv[2]
+    cat = 
+
+
