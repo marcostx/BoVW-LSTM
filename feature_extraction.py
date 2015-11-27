@@ -1,14 +1,33 @@
+"""
+
+//[]------------------------------------------------------------------------[]
+//|                                                                          |
+//|                         Feature Extraction Module                        |
+//|                               Version 1.0                                |
+//|                                                                          |
+//|              Copyright 2015-2020, Marcos Vinicius Teixeira               |
+//|                          All Rights Reserved.                            |
+//|                                                                          |
+//[]------------------------------------------------------------------------[]
+//
+//  OVERVIEW: feature_extraction.py
+//  ========
+
+
+// Parameters:
+// sys.args[1] => dataset path
+// 
+
+"""
+
 from os.path import exists, isdir, basename, join, splitext
 import sift
 from glob import glob
 from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like
 import scipy.cluster.vq as vq
-import libsvm
 from cPickle import dump, HIGHEST_PROTOCOL
 import argparse
 import sys
-
-
 
 EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
 DATASETPATH = '../dataset'
