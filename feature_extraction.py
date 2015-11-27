@@ -15,8 +15,9 @@
 
 
 // Parameters:
-// sys.args[1] => dataset path
-// 
+// sys.argv[1] => dataset path
+// sys.argv[2] => test folder path
+// sys.argv[3] => video name
 
 """
 
@@ -108,6 +109,7 @@ def writeHistogramsToFile(nwords, labels, fnames, all_word_histgrams, features_f
     fmt = '%i '
     for i in range(nwords):
         fmt = fmt + str(i) + ':%f '
+    
     savetxt(features_fname, data_rows, fmt)
 
 if __name__ == '__main__':
@@ -176,11 +178,40 @@ if __name__ == '__main__':
 
     # test in a new sequence of video frames
     print "Starting to generate histograms to video.."
-    if sys.argc < 2:
-    	print "Missing params! "
-    	exit(1)
     # taking the video folder name
-    videofolder = sys.argv[2]
-    cat = 
+    
+    if not exists(sys.argv[2] + '/' + sys.argv[3]):
+    	print "This path doesn't exist!"
+    	exit(1)
+    
+    videofolder = sys.argv[3]
+    
+    test_files = []
+    test_features = {}
+    test_frames_labels = {}
 
+    testfolder_path = join(sys.argv[2], videofolder)
+
+    test_files = get_imgfiles(testfolder_path)
+    # extracting features
+    feats = extractSift(test_files)
+
+    test_features.update(feats)
+    
+    # default class for all frames ( 0 )
+    for i in cat_files:   
+        test_frames_labels[i] = 0
+
+    # Generate the histograms based on codebook pre-processed (for all frames of the video )
+    histograms = {}
+    for imagefname in test_features:
+        visual_histogram = computeHistograms(codebook, test_features[imagefname])
+        histograms[imagefname] = visual_histogram
+
+#    print "writing histograms to file"
+#    writeHistogramsToFile(nclusters,
+#                          test_frames_labels,
+#                          test_files,
+#                          histograms,
+#                          sys.argv[2] + HISTOGRAMS_FILE)
 
