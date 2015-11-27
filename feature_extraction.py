@@ -124,8 +124,11 @@ if __name__ == '__main__':
   
     all_files = []
     all_files_labels = {}
+    
+    # Obs,: all_features is a dict of form: 'image-path' : 'descriptor'
     all_features = {}
     cat_label = {}
+
     for cat, label in zip(cats, range(ncats)):
         # path of class
         cat_path = join(datasetpath, cat)
@@ -134,7 +137,7 @@ if __name__ == '__main__':
         # extracting features
         cat_features = extractSift(cat_files)
         all_files = all_files + cat_files
-        # refreshing features
+        # appending more features
         all_features.update(cat_features)
         cat_label[cat] = label
         for i in cat_files:   
@@ -143,18 +146,18 @@ if __name__ == '__main__':
     print "computing the visual words via k-means"
     # passing to numpy array
     all_features_array = dict2numpy(all_features)
-    # numero de features
+    # number of features
     nfeatures = all_features_array.shape[0]
-    # numero de clusters
+    # number of clusters
     nclusters = int(sqrt(nfeatures))
     
     codebook, distortion = vq.kmeans(all_features_array,
                                              nclusters,
                                              thresh=K_THRESH)
 
-    with open(datasetpath + CODEBOOK_FILE, 'wb') as f:
-
-        dump(codebook, f, protocol=HIGHEST_PROTOCOL)
+    print "writing the codebook in file "
+    f = open(datasetpath + CODEBOOK_FILE, 'wb')
+    dump(codebook, f, protocol=HIGHEST_PROTOCOL)
 
     print "compute the visual words histograms for each image"
     all_word_histgrams = {}
@@ -162,21 +165,11 @@ if __name__ == '__main__':
         word_histgram = computeHistograms(codebook, all_features[imagefname])
         all_word_histgrams[imagefname] = word_histgram
 
-    print "write the histograms to file to pass it to the svm"
+    print "writing histograms to file"
     writeHistogramsToFile(nclusters,
                           all_files_labels,
                           all_files,
                           all_word_histgrams,
                           datasetpath + HISTOGRAMS_FILE)
 
-    #print "train svm"
-    #c, g, rate, model_file = libsvm.grid(datasetpath + HISTOGRAMS_FILE,
-    #                                     png_filename='grid_res_img_file.png')
-
-    #print "--------------------"
-    #print "## outputting results"
-    #print "model file: " + datasetpath + model_file
-    #print "codebook file: " + datasetpath + CODEBOOK_FILE
-    #print "category      ==>  label"
-    #for cat in cat_label:
-    #    print '{0:13} ==> {1:6d}'.format(cat, cat_label[cat])
+    # Train LSTM
