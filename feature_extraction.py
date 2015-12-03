@@ -47,11 +47,12 @@
 
 """
 
-from os.path import exists, isdir, basename, join, splitext
+from os.path import exists, isdir, basename, isfile, join, splitext
 import sift
 from glob import glob
-from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like
+from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like, fromstring, asarray
 import scipy.cluster.vq as vq
+import matplotlib.pyplot as plt
 from cPickle import dump, HIGHEST_PROTOCOL
 import argparse
 import sys
@@ -64,7 +65,7 @@ HISTOGRAMS_FILE = 'trainingdata.lstm'
 # threshold for early stopping kmeans 
 K_THRESH = 1 
 # name of the codebook file
-CODEBOOK_FILE = 'codebook.file'
+CODEBOOK_FILE = 'codebook.txt'
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
@@ -133,17 +134,19 @@ def computeHistograms(codebook, descriptors):
     return histogram_of_words
 
 # writing the histograms into the file 
-def writeHistogramsToFile(nwords, labels, fnames, all_word_histgrams, features_fname):
+def writeHistogramsToFile(nwords, fnames, all_word_histgrams, features_fname):
     data_rows = zeros(nwords + 1)  # +1 for the category label
+
     for fname in fnames:
         histogram = all_word_histgrams[fname]
+
         if (histogram.shape[0] != nwords):  # scipy deletes empty clusters
             nwords = histogram.shape[0]
             data_rows = zeros(nwords + 1)
-            print 'nclusters have been reduced to ' + str(nwords)
         
         data_row = hstack((0, histogram))
         data_rows = vstack((data_rows, data_row))
+    
     data_rows = data_rows[1:]
     fmt = '%i '
     for i in range(nwords):
@@ -151,7 +154,21 @@ def writeHistogramsToFile(nwords, labels, fnames, all_word_histgrams, features_f
     
     savetxt(features_fname, data_rows, fmt)
 
+
+# passing the codebook of string to numpy array
+def stringToNumpy(codebook_file):
+    codebook = []
+
+    lines = codebook_file.readlines()
+
+    for line in lines:
+        line_array = fromstring(line,dtype=float,sep=' ')
+        codebook.append(line_array)
+
+    return asarray(codebook)
+
 if __name__ == '__main__':
+    codebook_exists = False
 
     print "Parsing params"
     datasetpath = sys.argv[1]
@@ -163,44 +180,49 @@ if __name__ == '__main__':
         print"Wrong path! \n"
         exit(1)
 
-    # using a dataset to generate the codebook
+    # checking if already exist a codebook. If not, create a new codebook.
+    # ...
+    if isfile(datasetpath + '/' + CODEBOOK_FILE):
+        codebook_exists = True
+        print "Already exist a codebook. Using him"
+        content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
+        codebook = stringToNumpy(content_file)
+    else:   
+        all_files = []
+        all_files_labels = {}
+        
+        # Obs,: all_features is a dict of form: 'image-path' : 'descriptor'
+        all_features = {}
+        cat_label = {}
 
-    all_files = []
-    all_files_labels = {}
-    
-    # Obs,: all_features is a dict of form: 'image-path' : 'descriptor'
-    all_features = {}
-    cat_label = {}
+        for cat, label in zip(cats, range(ncats)):
+            # path of class
+            cat_path = join(datasetpath, cat)
+            # name of each image file
+            cat_files = get_imgfiles(cat_path)
+            # extracting features
+            cat_features = extractSift(cat_files)
+            all_files = all_files + cat_files
+            # appending more features
+            all_features.update(cat_features)
+            cat_label[cat] = label
+            for i in cat_files:   
+                all_files_labels[i] = label
 
-    for cat, label in zip(cats, range(ncats)):
-        # path of class
-        cat_path = join(datasetpath, cat)
-        # name of each image file
-        cat_files = get_imgfiles(cat_path)
-        # extracting features
-        cat_features = extractSift(cat_files)
-        all_files = all_files + cat_files
-        # appending more features
-        all_features.update(cat_features)
-        cat_label[cat] = label
-        for i in cat_files:   
-            all_files_labels[i] = label
-
-    print "computing the visual words via k-means"
-    # passing to numpy array
-    all_features_array = dict2numpy(all_features)
-    # number of features
-    nfeatures = all_features_array.shape[0]
-    # number of clusters
-    nclusters = int(sqrt(nfeatures))
-    
-    codebook, distortion = vq.kmeans(all_features_array,
-                                             nclusters,
-                                             thresh=K_THRESH)
-
-    print "writing the codebook in file "
-    f = open(datasetpath + CODEBOOK_FILE, 'wb')
-    dump(codebook, f, protocol=HIGHEST_PROTOCOL)
+        print "computing the visual words via k-means"
+        # passing to numpy array
+        all_features_array = dict2numpy(all_features)
+        # number of features
+        nfeatures = all_features_array.shape[0]
+        # number of clusters
+        nclusters = int(sqrt(nfeatures))
+        
+        codebook, distortion = vq.kmeans(all_features_array,
+                                                 nclusters,
+                                                 thresh=K_THRESH)
+        print "writing the codebook in file "
+        f = open(datasetpath + CODEBOOK_FILE, 'wb')
+        savetxt(f,codebook)
 
     # test in a new sequence of video frames
     print "Starting to generate histograms to video.."
@@ -223,10 +245,6 @@ if __name__ == '__main__':
     feats = extractSift(test_files)
 
     test_features.update(feats)
-    
-    # default class for all frames ( 0 )
-    for i in cat_files:   
-        test_frames_labels[i] = 0
 
     # Generate the histograms based on codebook pre-processed (for all frames of the video )
     histograms = {}
@@ -234,10 +252,26 @@ if __name__ == '__main__':
         visual_histogram = computeHistograms(codebook, test_features[imagefname])
         histograms[imagefname] = visual_histogram
 
-#   print "writing histograms to file"
-    writeHistogramsToFile(nclusters,
-                          test_frames_labels,
-                          test_files,
-                          histograms,
-                          sys.argv[2] + HISTOGRAMS_FILE)
+    # print "writing histograms to file"
+    if not codebook_exists:
+        number_of_words = nclusters
+        writeHistogramsToFile(number_of_words,
+                              test_files,
+                              histograms,
+                              sys.argv[2] + HISTOGRAMS_FILE)
+    else:
+        number_of_words = len(content_file.readlines())
+        writeHistogramsToFile(number_of_words,
+                              test_files,
+                              histograms,
+                              sys.argv[2] + HISTOGRAMS_FILE)
+
+    # .. plotting the histograms
+
+    #for imageName in test_features:
+    #    plt.hist(histograms[imageName])
+    #    plt.title("Gaussian Histogram")
+    #    plt.xlabel("Value")
+    #    plt.ylabel("Frequency")
+    #    plt.show()
 
