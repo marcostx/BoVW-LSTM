@@ -32,7 +32,9 @@ import sys
 from os import mkdir
 from os.path import splitext, exists
 
-
+if len(sys.argv) < 3 or len(sys.argv) < 2:
+	print"Usage: ./process_video video_class video_path"
+	exit(1)
 # getting the class of the video
 clss = sys.argv[1]
 # getting the name of video
@@ -58,13 +60,13 @@ while(cap.isOpened()):
         break
 
 frame_count = 0
-if not exists('dataset/' + clss):
-    mkdir('dataset/' + clss)
+if not exists(clss):
+    mkdir(clss)
 
 filename = splitext(vname)[0]
     
 for i in frames_:
-	cv2.imwrite('dataset/' + clss + '/' + filename + str(frame_count) + '.png',i)
+	cv2.imwrite(clss + '/' + filename + str(frame_count) + '.png',i)
 	frame_count+=1
 
 cap.release()

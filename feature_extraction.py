@@ -170,6 +170,11 @@ def stringToNumpy(codebook_file):
 if __name__ == '__main__':
     codebook_exists = False
 
+
+    if len(sys.argv) < 3 or len(sys.argv) < 2:
+        print"Usage: ./process_video video_class video_path"
+        exit(1)
+
     print "Parsing params"
     datasetpath = sys.argv[1]
 
@@ -228,17 +233,15 @@ if __name__ == '__main__':
     print "Starting to generate histograms to video.."
     # taking the video folder name
     
-    if not exists(sys.argv[2] + '/' + sys.argv[3]):
+    if not exists(sys.argv[2]):
     	print "This path doesn't exist!"
     	exit(1)
-    
-    videofolder = sys.argv[3]
     
     test_files = []
     test_features = {}
     test_frames_labels = {}
 
-    testfolder_path = join(sys.argv[2], videofolder)
+    testfolder_path = sys.argv[2]
 
     test_files = get_imgfiles(testfolder_path)
     # extracting features
@@ -252,7 +255,7 @@ if __name__ == '__main__':
         visual_histogram = computeHistograms(codebook, test_features[imagefname])
         histograms[imagefname] = visual_histogram
 
-    # print "writing histograms to file"
+    print "writing histograms to file"
     if not codebook_exists:
         number_of_words = nclusters
         writeHistogramsToFile(number_of_words,
