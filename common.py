@@ -2,7 +2,7 @@
 
 //[]------------------------------------------------------------------------[]
 //|                                                                          |
-//|                         Feature Extraction Module                        |
+//|                              Common Module                               |
 //|                               Version 1.0                                |
 //|                                                                          |
 //|              Copyright 2015-2020, Marcos Vinicius Teixeira               |
