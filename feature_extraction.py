@@ -62,7 +62,7 @@ from common import *
 # extentions for image files ..
 
 DATASETPATH = '../dataset'
-PRE_ALLOCATION_BUFFER = 1000  # for sift
+
 # name of file where will be saved the histograms of visual words for each frame 
 HISTOGRAMS_FILE = 'trainingdata.lstm'
 # threshold for early stopping kmeans 
@@ -83,7 +83,7 @@ def gen_codebook():
 
     print "Parsing params"
     datasetpath = sys.argv[1]
-
+    codebook_exists = False
     nclusters = 0
     cats = get_classes(datasetpath)
     ncats = len(cats)
@@ -98,7 +98,11 @@ def gen_codebook():
         codebook_exists = True
         print "Already exist a codebook. Using him"
         content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
+        for line in content_file:
+            nclusters = nclusters + 1
+
         codebook = stringToNumpy(content_file)
+       
     else:   
         all_files = []
         all_files_labels = {}
@@ -138,7 +142,7 @@ def gen_codebook():
 
     return (codebook_exists, codebook, nclusters)
 
-def gen_histograms(nclusters,codebook_exists,codebook):
+def gen_histograms(nclusters,codebook,codebook_exists):
     # test in a new sequence of video frames
     print "Starting to generate histograms to video.."
     # taking the video folder name
@@ -184,7 +188,11 @@ if __name__ == '__main__':
 
     args = sys.argv
 
-    (nclusters, codebook, codebook_exists) = gen_codebook()
+    (codebook_exists, codebook, nclusters) = gen_codebook()
+
+    print nclusters
+    print codebook
+    print codebook_exists
 
     gen_histograms(nclusters, codebook, codebook_exists)
 
