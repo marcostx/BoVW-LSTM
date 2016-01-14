@@ -57,6 +57,7 @@ import matplotlib.pyplot as plt
 from cPickle import dump, HIGHEST_PROTOCOL
 import argparse
 import sys
+import numpy as np
 from common import *
 
 # extentions for image files ..
@@ -70,11 +71,11 @@ K_THRESH = 1
 # name of the codebook file
 CODEBOOK_FILE = 'codebook.txt'
 
-
-def feature_hashing(features, size_f):
-    h = FeatureHasher(n_features=size_f)
+# Hashing trick
+def feature_hashing(features, size_f=100):
+    h = FeatureHasher(n_features=size_f,input_type='string')
     f = h.transform(features)
-    print h.toarray()
+    return f.toarray()
 
 def gen_codebook():
     if len(sys.argv) < 3 or len(sys.argv) < 2:
@@ -98,10 +99,10 @@ def gen_codebook():
         codebook_exists = True
         print "Already exist a codebook. Using him"
         content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
+        codebook = stringToNumpy(content_file)
+
         for line in content_file:
             nclusters = nclusters + 1
-
-        codebook = stringToNumpy(content_file)
        
     else:   
         all_files = []
@@ -126,8 +127,10 @@ def gen_codebook():
                 all_files_labels[i] = label
 
         print "computing the visual words via k-means"
+
         # passing to numpy array
         all_features_array = dict2numpy(all_features)
+        
         # number of features
         nfeatures = all_features_array.shape[0]
         # number of clusters
@@ -175,13 +178,15 @@ def gen_histograms(nclusters,codebook,codebook_exists):
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              sys.argv[2] + HISTOGRAMS_FILE)
+                              sys.argv[2] + "_" + HISTOGRAMS_FILE)
     else:
+        datasetpath = sys.argv[1]
+        content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
         number_of_words = len(content_file.readlines())
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              sys.argv[2] + HISTOGRAMS_FILE)
+                              sys.argv[2] + "_" + HISTOGRAMS_FILE)
 
 if __name__ == '__main__':
     codebook_exists = False
@@ -189,10 +194,6 @@ if __name__ == '__main__':
     args = sys.argv
 
     (codebook_exists, codebook, nclusters) = gen_codebook()
-
-    print nclusters
-    print codebook
-    print codebook_exists
 
     gen_histograms(nclusters, codebook, codebook_exists)
 
