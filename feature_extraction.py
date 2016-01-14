@@ -73,9 +73,9 @@ CODEBOOK_FILE = 'codebook.txt'
 
 # Hashing trick
 def feature_hashing(features, size_f=100):
-    h = FeatureHasher(n_features=size_f,input_type='string')
+    h = FeatureHasher(n_features=size_f)
     f = h.transform(features)
-    return f.toarray()
+    print f.toarray()
 
 def gen_codebook():
     if len(sys.argv) < 3 or len(sys.argv) < 2:
@@ -188,6 +188,22 @@ def gen_histograms(nclusters,codebook,codebook_exists):
                               histograms,
                               sys.argv[2] + "_" + HISTOGRAMS_FILE)
 
+def hashing_trick():
+    if isfile(sys.argv[2] + "_" + HISTOGRAMS_FILE):
+        # apply feature hashing
+        f = open(sys.argv[2] + "_" + HISTOGRAMS_FILE,'r')
+        dict_list = []
+        for _ in f:
+            splited_t = _.split(" ")
+            dict_words = {}
+            index = 1
+            for p in splited_t:
+                dict_words[str(index)] = float(p)
+                index+=1
+            dict_list.append(dict_words)
+
+        feature_hashing(dict_list)
+
 if __name__ == '__main__':
     codebook_exists = False
 
@@ -196,6 +212,8 @@ if __name__ == '__main__':
     (codebook_exists, codebook, nclusters) = gen_codebook()
 
     gen_histograms(nclusters, codebook, codebook_exists)
+
+    hashing_trick()
 
     # .. plotting the histograms
 
