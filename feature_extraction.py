@@ -12,7 +12,7 @@
 //
 //  OVERVIEW: feature_extraction.py
 //  ================================
-//  This module have the goal of generate histograms of a video sequence based
+//  This module have the function of generate histograms of a video sequence based
 //  in codebook of visual words of a dataset pre-defined. The inputs are :
 //
 //      - path to dataset folder , where we'll compute the codebook (if doesn't 
@@ -70,12 +70,14 @@ HISTOGRAMS_FILE = 'trainingdata.lstm'
 K_THRESH = 1 
 # name of the codebook file
 CODEBOOK_FILE = 'codebook.txt'
+# name of the output hash matrix file
+HASHMATRIX_FILE = 'input_classifier.txt'
 
 # Hashing trick
 def feature_hashing(features, size_f=100):
     h = FeatureHasher(n_features=size_f)
     f = h.transform(features)
-    print f.toarray()
+    return f.toarray()
 
 def gen_codebook():
     if len(sys.argv) < 3 or len(sys.argv) < 2:
@@ -202,7 +204,8 @@ def hashing_trick():
                 index+=1
             dict_list.append(dict_words)
 
-        feature_hashing(dict_list)
+        return feature_hashing(dict_list)
+    return None
 
 if __name__ == '__main__':
     codebook_exists = False
@@ -213,7 +216,11 @@ if __name__ == '__main__':
 
     gen_histograms(nclusters, codebook, codebook_exists)
 
-    hashing_trick()
+    # This matrix will be used by the classifier
+    hashMatrix = hashing_trick()
+
+    # saving into a file
+    writeHashMatrixToFile(HASHMATRIX_FILE,hashMatrix)
 
     # .. plotting the histograms
 

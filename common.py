@@ -10,7 +10,11 @@
 //|                                                                          |
 //[]------------------------------------------------------------------------[]
 //
-
+OVERVIEW: feature_extraction.py
+//  ================================
+//  This module implement methods that are common to another modules, by exam-
+//  the feature_extraction.py.
+//
 """
 
 
@@ -26,6 +30,7 @@ import argparse
 import sys
 
 EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
+PRE_ALLOCATION_BUFFER = 1000  # for sift
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
@@ -112,8 +117,11 @@ def writeHistogramsToFile(nwords, fnames, all_word_histgrams, features_fname):
     for i in range(nwords):
         fmt = fmt + str(i) + ':%f '
     
-    savetxt(features_fname, data_rows   )
+    savetxt(features_fname, data_rows)
 
+
+def writeHashMatrixToFile(filename, hashMatrix):
+    savetxt(filename, hashMatrix)
 
 # passing the codebook of string to numpy array
 def stringToNumpy(codebook_file):
