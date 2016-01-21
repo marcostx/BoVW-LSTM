@@ -48,7 +48,7 @@ The dataset should have following structure, where all the video frames belongin
     ...
     |    └-- classN
 
-### Prerequisites:
+### Prerequisites (for Linux):
 
 To install the necessary libraries run following code from working directory:
     
@@ -58,8 +58,17 @@ To install the necessary libraries run following code from working directory:
     cp sift*/sift sift
     
 
+### Prerequisites (for Mac OS):
+    
+    # installing sift
+    Download and unpack the latest VLFeat binary package from the download page (currently the latest version is 0.9.20).Copy
+    the binary sift and the libvl.dylib to the bag-of-visual-words repository path. The binaries are in the bin/
+    directory,just pick the sub-directory for your platform. 
+    
+ 
+
 #### Notes
-If you get an `IOError: SIFT executable not found` error, try `sudo apt-get install libc6-i386`.
+If you're using Linux and get an `IOError: SIFT executable not found` error, try `sudo apt-get install libc6-i386`.
     
 ### References:
 
