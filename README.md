@@ -76,7 +76,9 @@ If you're using Linux and get an `IOError: SIFT executable not found` error, try
 David G. Lowe, "Distinctive image features from scale-invariant keypoints," International Journal of Computer Vision, 60, 2 (2004), pp. 91-110.
 
 #### sift.py:
-Taken from http://www.janeriksolem.net/2009/02/sift-python-implementation.html
+Taken from http://www.janeriksolem.net/2009/02/sift-python-implementation.html (Linux)
+or 
+http://www.maths.lth.se/matematiklth/personal/solem/downloads/vlfeat.py (Mac)
 
 [1]: https://en.wikipedia.org/wiki/Bag-of-words_model_in_computer_vision
 [2]: https://github.com/marcostx/bag-of-visual-words/blob/master/process_video.py
