@@ -47,38 +47,41 @@
 
 """
 
+# Libs
+from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like, fromstring, asarray
 from os.path import exists, isdir, basename, isfile, join, splitext
 from sklearn.feature_extraction import FeatureHasher
-import sift
-from glob import glob
-from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like, fromstring, asarray
-import scipy.cluster.vq as vq
 import matplotlib.pyplot as plt
-from cPickle import dump, HIGHEST_PROTOCOL
+import scipy.cluster.vq as vq
+from glob import glob
+import numpy as np
 import argparse
 import sys
-import numpy as np
+
+# Files / methods
 from common import *
-
-# extentions for image files ..
-
-DATASETPATH = '../dataset'
+import sift
 
 # name of file where will be saved the histograms of visual words for each frame 
 HISTOGRAMS_FILE = 'trainingdata.lstm'
-# threshold for early stopping kmeans 
-K_THRESH = 1 
-# name of the codebook file
-CODEBOOK_FILE = 'codebook.txt'
+
 # name of the output hash matrix file
 HASHMATRIX_FILE = 'input_classifier.txt'
+
+# threshold for early stopping kmeans 
+K_THRESH = 1
+
+# name of the codebook file
+CODEBOOK_FILE = 'codebook.txt'
+
 
 # Hashing trick
 def feature_hashing(features, size_f=100):
     h = FeatureHasher(n_features=size_f)
     f = h.transform(features)
     return f.toarray()
-
+# Generating the codebook of visual words
+# ..
 def gen_codebook():
     if len(sys.argv) < 3 or len(sys.argv) < 2:
         print"Usage: ./feature_extraction dataset_path video_sequence_path"

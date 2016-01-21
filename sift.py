@@ -1,127 +1,152 @@
-""" 
-    
-    Author: Jan Erik Solem, 2009-01-30
-    Adapted by: Marcos Teixeira, 2015-12-01
-    http://www.janeriksolem.net/2009/02/sift-python-implementation.html
-
-"""
-
-import os
-import subprocess
 from PIL import Image
+import os
 from numpy import *
-import numpy
-import cPickle
-import pylab
-from os.path import exists
-MAXSIZE = 1024
-VERBOSE = True
-WRITE_VERBOSE = False  # no verbose reading atm
+from pylab import *
 
 
-def process_image(imagename, resultname='temp.sift', dense=False):    
-    """ process an image and save the results in a .key ascii file"""
-    print "working on ", imagename
-    if dense == False:
-        if imagename[-3:] != 'pgm':
-            # create a pgm file, image is resized, if it is too big.
-            # sift returns an error if more than 8000 features are found
-            size = (MAXSIZE, MAXSIZE)
-            im = Image.open(imagename).convert('L')
-            im.thumbnail(size, Image.ANTIALIAS)
-            im.save('tmp.pgm')
-            imagename = 'tmp.pgm'
-        
-        cmmd = "./sift < " + imagename + " > " + resultname
+def process_image(imagename,resultname,params="--edge-thresh 10 --peak-thresh 5"):
+    """ process an image and save the results in a file"""
 
-        # run extraction command
-        returnvalue = subprocess.call(cmmd, shell=True)
-        if returnvalue == 127:
-            os.remove(resultname) # removing empty resultfile created by output redirection
-            raise IOError("SIFT executable not found")
-        if returnvalue == 2:
-            os.remove(resultname) # removing empty resultfile created by output redirection
-            raise IOError("image " + imagename + " not found")            
-        if os.path.getsize(resultname) == 0:
-            raise IOError("extracting SIFT features failed " + resultname)
+    if imagename[-3:] != 'pgm':
+        #create a pgm file
+        im = Image.open(imagename).convert('L')
+        im.save('tmp.pgm')
+        imagename = 'tmp.pgm'
 
-    else:
-        import vlfeat
-
-        # defines how dense the grid is
-        size = (150, 150)
-        step = 10
-        
-        im = Image.open(imagename).resize(size, Image.ANTIALIAS)
-        im_array = numpy.asarray(im)
-        if im_array.ndim == 3:
-            im_gray = vlfeat.vl_rgb2gray(im_array)
-        elif im_array.ndim == 2:
-            im_gray = im_array
-        else:
-            raise IOError("Not enough dims found in image " + resultname)
-        
-
-        locs, int_descriptors = vlfeat.vl_dsift(im_gray, step=step, verbose=VERBOSE)
-        nfeatures = int_descriptors.shape[1]
-        padding = numpy.zeros((2, nfeatures))
-        locs = numpy.vstack((locs, padding))
-        header = ' '.join([str(nfeatures), str(128)])
-        temp = int_descriptors.astype('float')  # convert descriptors to float
-        descriptors = temp[:]
-        with open(resultname, 'wb') as f:
-            cPickle.dump([locs.T, descriptors.T], f, protocol=cPickle.HIGHEST_PROTOCOL)
-        print "features saved in", resultname
-        if WRITE_VERBOSE:
-            with open(resultname, 'w') as f:
-                f.write(header)
-                f.write("\n")
-                for i in range(nfeatures):
-                    f.write(' '.join(map(str, locs[:, i])))
-                    f.write("\n")
-                    f.write(' '.join(map(str, descriptors[:, i])))
-                    f.write("\n")
+    cmmd = str("./sift "+imagename+" --output="+resultname+
+                " "+params)
+    os.system(cmmd)
+    print 'processed', imagename, 'to', resultname
 
 
-def read_features_from_file(filename='temp.sift', dense=False):
+def read_features_from_file(filename):
     """ read feature properties and return in matrix form"""
-    
-    if exists(filename) != False | os.path.getsize(filename) == 0:
-        raise IOError("wrong file path or file empty: "+ filename)
-    if dense == True:
-        with open(filename, 'rb') as f:
-            locs, descriptors = cPickle.load(f)
-    else:           
-        f = open(filename, 'r')
-        header = f.readline().split()
-        
-        num = int(header[0])  # the number of features
-        featlength = int(header[1])  # the length of the descriptor
-        if featlength != 128:  # should be 128 in this case
-            raise RuntimeError('Keypoint descriptor length invalid (should be 128).')
-                 
-        locs = zeros((num, 4))
-        descriptors = zeros((num, featlength));        
+    f = loadtxt(filename)
+    return f[:,:4],f[:,4:] # feature locations, descriptors
 
-        #parse the .key file
-        e = f.read().split()  # split the rest into individual elements
-        pos = 0
-        for point in range(num):
-            #row, col, scale, orientation of each feature
-            for i in range(4):
-                locs[point, i] = float(e[pos + i])
-            pos += 4
-            
-            #the descriptor values of each feature
-            for i in range(featlength):
-                descriptors[point, i] = int(e[pos + i])
-            #print descriptors[point]
-            pos += 128
-            
-            #normalize each input vector to unit length
-            descriptors[point] = descriptors[point] / linalg.norm(descriptors[point])
-            #print descriptors[point]
-            
-        f.close()
+
+def write_features_to_file(filename,locs,desc):
+    """ save feature location and descriptor to file"""
+    savetxt(filename,hstack((locs,desc)))
     
-    return locs, descriptors
+
+def plot_features(im,locs,circle=False):
+    """ show image with features. input: im (image as array), 
+        locs (row, col, scale, orientation of each feature) """
+
+    def draw_circle(c,r):
+        t = arange(0,1.01,.01)*2*pi
+        x = r*cos(t) + c[0]
+        y = r*sin(t) + c[1]
+        plot(x,y,'b',linewidth=2)
+
+    imshow(im)
+    if circle:
+        [draw_circle([p[0],p[1]],p[2]) for p in locs]
+    else:
+        plot(locs[:,0],locs[:,1],'ob')
+    axis('off')
+
+
+def match(desc1,desc2):
+    """ for each descriptor in the first image, 
+        select its match in the second image.
+        input: desc1 (descriptors for the first image), 
+        desc2 (same for second image). """
+    
+    desc1 = array([d/linalg.norm(d) for d in desc1])
+    desc2 = array([d/linalg.norm(d) for d in desc2])
+    
+    dist_ratio = 0.6
+    desc1_size = desc1.shape
+    
+    matchscores = zeros((desc1_size[0],1))
+    desc2t = desc2.T #precompute matrix transpose
+    for i in range(desc1_size[0]):
+        dotprods = dot(desc1[i,:],desc2t) #vector of dot products
+        dotprods = 0.9999*dotprods
+        #inverse cosine and sort, return index for features in second image
+        indx = argsort(arccos(dotprods))
+        
+        #check if nearest neighbor has angle less than dist_ratio times 2nd
+        if arccos(dotprods)[indx[0]] < dist_ratio * arccos(dotprods)[indx[1]]:
+            matchscores[i] = int(indx[0])
+    
+    return matchscores
+
+
+def appendimages(im1,im2):
+    """ return a new image that appends the two images side-by-side."""
+    
+    #select the image with the fewest rows and fill in enough empty rows
+    rows1 = im1.shape[0]    
+    rows2 = im2.shape[0]
+    
+    if rows1 < rows2:
+        im1 = concatenate((im1,zeros((rows2-rows1,im1.shape[1]))), axis=0)
+    elif rows1 > rows2:
+        im2 = concatenate((im2,zeros((rows1-rows2,im2.shape[1]))), axis=0)
+    #if none of these cases they are equal, no filling needed.
+    
+    return concatenate((im1,im2), axis=1)
+
+
+def plot_matches(im1,im2,locs1,locs2,matchscores,show_below=True):
+    """ show a figure with lines joining the accepted matches
+        input: im1,im2 (images as arrays), locs1,locs2 (location of features), 
+        matchscores (as output from 'match'), show_below (if images should be shown below). """
+    
+    im3 = appendimages(im1,im2)
+    if show_below:
+        im3 = vstack((im3,im3))
+    
+    # show image
+    imshow(im3)
+    
+    # draw lines for matches
+    cols1 = im1.shape[1]
+    for i in range(len(matchscores)):
+        if matchscores[i] > 0:
+            plot([locs1[i,0], locs2[matchscores[i,0],0]+cols1], [locs1[i,1], locs2[matchscores[i,0],1]], 'c')
+    axis('off')
+
+
+def match_twosided(desc1,desc2):
+    """ two-sided symmetric version of match(). """
+    
+    matches_12 = match(desc1,desc2)
+    matches_21 = match(desc2,desc1)
+    
+    ndx_12 = matches_12.nonzero()[0]
+    
+    #remove matches that are not symmetric
+    for n in ndx_12:
+        if matches_21[int(matches_12[n])] != n:
+            matches_12[n] = 0
+    
+    return matches_12
+
+
+if __name__ == "__main__":
+    
+    process_image('box.pgm','tmp.sift')
+    l,d = read_features_from_file('tmp.sift')
+    
+    im = array(Image.open('box.pgm'))
+    figure()
+    plot_features(im,l,True)
+    gray()
+    
+    process_image('scene.pgm','tmp2.sift')
+    l2,d2 = read_features_from_file('tmp2.sift')
+    im2 = array(Image.open('scene.pgm'))    
+    
+    m = match_twosided(d,d2)
+    figure()
+    plot_matches(im,im2,l,l2,m)
+
+    gray()
+    show()
+    
+    
+    
