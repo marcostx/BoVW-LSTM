@@ -27,6 +27,7 @@ This code relies on:
 
 ### Example: Processing Video
 To extract the frame sequence of a given video input eg. video.mp4 that belongs to a given class eg. walking, use this command:
+    
     python process_video.py walking video.mp4
     
 Then will be create a new folder with the same name of the class given containing each frame extracted
