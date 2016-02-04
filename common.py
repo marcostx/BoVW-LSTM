@@ -117,11 +117,13 @@ def generate_dataset(f):
             mkdir(path + '/' + filename)
             
         for i in frames_:
-            cv2.imwrite(path + '/' + filename + '/' + filename + str(frame_count) + '.png',i)
+            cv2.imwrite(path + '/' + filename + '/' + filename + '_' + str(frame_count) + '.png',i)
             frame_count+=1
 
         cap.release()
         cv2.destroyAllWindows()
+
+    # Now, extracting the features for each video
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
