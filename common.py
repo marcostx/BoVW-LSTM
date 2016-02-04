@@ -28,9 +28,100 @@ import matplotlib.pyplot as plt
 from cPickle import dump, HIGHEST_PROTOCOL
 import argparse
 import sys
+import cv2
+import os
+import time
+from os import mkdir
+from os.path import splitext, exists
 
 EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
 PRE_ALLOCATION_BUFFER = 1000  # for sift
+
+
+def generate_dataset(f):
+    """lines = f.readlines()
+    urls = []
+    labels = []
+    nmax = 10
+    counter = 0 
+
+    # Taking the urls and labels
+    for line in lines:
+        if counter == nmax:
+            break
+        urlnlab = asarray(line.split(" "))
+        urls.append(urlnlab[0])
+        labels.append(urlnlab[1])
+        counter=counter+1
+    
+    counter=0
+    if not exists("videos/"):
+        mkdir("videos/")
+
+    # Dowloading the videos by url ( Ps.: the videos aare saved with its line position on the file)
+    for url in urls:
+        cmnd = str("youtube-dl --output \"videos/" + str(counter) + ".mp4\" " + url)
+        os.system(cmnd)
+        counter=counter+1
+    """
+
+    all_videos = []
+
+    path = "videos"
+    if not exists(path):
+        mkdir(path)
+
+    
+    for fname in glob(path + "/*"):
+        all_videos.extend([join(path, basename(fname))])
+    
+    path = "frames"
+    if not exists(path):
+        mkdir(path)
+
+    for vid in (all_videos):
+        vname = vid
+
+        # Opening the video
+        cap = cv2.VideoCapture(vname)
+
+        # Frame List
+        frames_ = []
+
+        # Reading the video
+        start = time.time()
+        while(cap.isOpened()):
+            ret, frame = cap.read()
+
+            interval = time.time()
+            if ret == False:
+                break
+
+            # 0.5 second window to take a frame
+            if (interval - start) > 0.5:
+                frames_.append(frame)
+                start = interval
+
+            # Show the frame
+            cv2.imshow('frame',frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        frame_count = 0
+
+        filename = vname.split("/")
+        filename = filename[1].split(".")
+        filename = filename[0]
+
+        if not exists(path + '/' + filename):
+            mkdir(path + '/' + filename)
+            
+        for i in frames_:
+            cv2.imwrite(path + '/' + filename + '/' + filename + str(frame_count) + '.png',i)
+            frame_count+=1
+
+        cap.release()
+        cv2.destroyAllWindows()
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
