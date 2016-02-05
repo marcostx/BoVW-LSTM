@@ -1,4 +1,4 @@
-Bag of Visual Words Image Feature Generator
+Bag of Visual Words Model
 ============================================
 
 This is an implementation of [bag of visual words model][1] in Python for feature extraction in videos.
