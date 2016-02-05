@@ -122,22 +122,61 @@ def generate_dataset(f):
         cap.release()
         cv2.destroyAllWindows()
     """
-    path = "frames"
-    all_videos = []
-    if not exists(path):
-        mkdir(path)
-    for fname in glob(path + "/*"):
-        all_videos.extend([join(path, basename(fname))])
-    
 
-    # Now, extracting the features for each video
-    for vid in all_videos:
-        filename = vid.split("/")
-        filename = filename[1].split(".")
-        filename = filename[0]
+    histograms_path = "histograms"
 
-        cmnd = "python feature_extraction.py dataset " + path + '/' + filename
-        os.system(cmnd)
+    # Extract the histograms (if necessary ..)
+    if not exists(histograms_path):
+        path = "frames"
+        all_videos = []
+
+        for fname in glob(path + "/*"):
+            all_videos.extend([join(path, basename(fname))])
+        
+
+        # Now, extracting the features for each video
+        for vid in all_videos:
+            filename = vid.split("/")
+            filename = filename[1].split(".")
+            filename = filename[0]
+
+            cmnd = "python feature_extraction.py dataset " + path + '/' + filename
+            os.system(cmnd)
+
+    # Creating the dataset (X and Y)
+    X = []
+    Y = []
+
+    trainset_path = "histograms"
+    trainset_files = []
+    for tname in glob(trainset_path + "/*"):
+        trainset_files.extend([join(trainset_path, basename(tname))])
+
+    dataset_lines = f.readlines()
+    # Filling the X and Y vectors
+    for histofilename in trainset_files:
+
+        # Searching the label in dataset sports-1m file
+        path_splited = histofilename.split("/")
+        path_splited = path_splited[1].split(".")
+        line = path_splited[0].split("_")[0]
+
+        string_line_dataset = dataset_lines[int(line)]
+        label = string_line_dataset.split(" ")[1]
+
+        # opening the histogram file of the video
+        histofile = open(histofilename)
+        lines = histofile.readlines()
+
+        for i in range(len(lines)):
+            lines[i] = asarray(lines[i])
+            X.append(lines[i])
+            Y.append(label)
+
+        histofile.close()
+
+    return X, Y
+            
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
@@ -220,9 +259,6 @@ def writeHistogramsToFile(nwords, fnames, all_word_histgrams, features_fname):
         data_rows = vstack((data_rows, data_row))
     
     data_rows = data_rows[1:]
-    fmt = '%i '
-    for i in range(nwords):
-        fmt = fmt + str(i) + ':%f '
     
     savetxt(features_fname, data_rows)
 

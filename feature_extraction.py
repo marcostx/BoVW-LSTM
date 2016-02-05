@@ -171,19 +171,23 @@ def gen_histograms(nclusters,codebook,codebook_exists):
         histograms[imagefname] = visual_histogram
 
     print "writing histograms to file"
+    path = "histograms"
+    if not exists(path):
+        mkdir(path)
+
     if not codebook_exists:
         number_of_words = nclusters
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              video_name + '_' + HISTOGRAMS_FILE)
+                              path + "/" + video_name + '_' + HISTOGRAMS_FILE)
     else:
         content_file = open(CODEBOOK_FILE, 'r')
         number_of_words = len(content_file.readlines())
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              video_name + '_' + HISTOGRAMS_FILE)
+                              path + "/" + video_name + '_' + HISTOGRAMS_FILE)
 
 def hashing_trick():
     if isfile(sys.argv[2] + "_" + HISTOGRAMS_FILE):
