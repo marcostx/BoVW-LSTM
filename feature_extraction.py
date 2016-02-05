@@ -63,7 +63,7 @@ from common import *
 import sift
 
 # name of file where will be saved the histograms of visual words for each frame 
-HISTOGRAMS_FILE = 'trainingdata.lstm'
+HISTOGRAMS_FILE = 'histograms.lstm'
 
 # name of the output hash matrix file
 HASHMATRIX_FILE = 'input_classifier.txt'
@@ -98,55 +98,44 @@ def gen_codebook():
         print"Wrong path! \n"
         exit(1)
 
-    # checking if already exist a codebook. If not, create a new codebook.
-    # ...
-    if isfile(datasetpath + '/' + CODEBOOK_FILE):
-        codebook_exists = True
-        print "Already exist a codebook. Using him"
-        content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
-        codebook = stringToNumpy(content_file)
+         
+    all_files = []
+    all_files_labels = {}
+    
+    # Obs,: all_features is a dict of form: 'image-path' : 'descriptor'
+    all_features = {}
+    cat_label = {}
 
-        for line in content_file:
-            nclusters = nclusters + 1
-       
-    else:   
-        all_files = []
-        all_files_labels = {}
-        
-        # Obs,: all_features is a dict of form: 'image-path' : 'descriptor'
-        all_features = {}
-        cat_label = {}
+    for cat, label in zip(cats, range(ncats)):
+        # path of class
+        cat_path = join(datasetpath, cat)
+        # name of each image file
+        cat_files = get_imgfiles(cat_path)
+        # extracting features
+        cat_features = extractSift(cat_files)
+        all_files = all_files + cat_files
+        # appending more features
+        all_features.update(cat_features)
+        cat_label[cat] = label
+        for i in cat_files:   
+            all_files_labels[i] = label
 
-        for cat, label in zip(cats, range(ncats)):
-            # path of class
-            cat_path = join(datasetpath, cat)
-            # name of each image file
-            cat_files = get_imgfiles(cat_path)
-            # extracting features
-            cat_features = extractSift(cat_files)
-            all_files = all_files + cat_files
-            # appending more features
-            all_features.update(cat_features)
-            cat_label[cat] = label
-            for i in cat_files:   
-                all_files_labels[i] = label
+    print "computing the visual words via k-means"
 
-        print "computing the visual words via k-means"
-
-        # passing to numpy array
-        all_features_array = dict2numpy(all_features)
-        
-        # number of features
-        nfeatures = all_features_array.shape[0]
-        # number of clusters
-        nclusters = int(sqrt(nfeatures))
-        
-        codebook, distortion = vq.kmeans(all_features_array,
-                                                 nclusters,
-                                                 thresh=K_THRESH)
-        print "writing the codebook in file "
-        f = open(datasetpath + CODEBOOK_FILE, 'wb')
-        savetxt(f,codebook)
+    # passing to numpy array
+    all_features_array = dict2numpy(all_features)
+    
+    # number of features
+    nfeatures = all_features_array.shape[0]
+    # number of clusters
+    nclusters = int(sqrt(nfeatures))
+    
+    codebook, distortion = vq.kmeans(all_features_array,
+                                             nclusters,
+                                             thresh=K_THRESH)
+    print "writing the codebook in file "
+    f = open(CODEBOOK_FILE, 'wb')
+    savetxt(f,codebook)
 
     return (codebook_exists, codebook, nclusters)
 
@@ -159,6 +148,10 @@ def gen_histograms(nclusters,codebook,codebook_exists):
         print "This path doesn't exist!"
         exit(1)
     
+    video_name = sys.argv[2].split("/")
+    video_name = video_name[1].split(".")
+    video_name = video_name[0]
+
     test_files = []
     test_features = {}
     test_frames_labels = {}
@@ -183,15 +176,14 @@ def gen_histograms(nclusters,codebook,codebook_exists):
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              sys.argv[2] + "_" + HISTOGRAMS_FILE)
+                              video_name + '_' + HISTOGRAMS_FILE)
     else:
-        datasetpath = sys.argv[1]
-        content_file = open(datasetpath + '/' + CODEBOOK_FILE, 'r')
+        content_file = open(CODEBOOK_FILE, 'r')
         number_of_words = len(content_file.readlines())
         writeHistogramsToFile(number_of_words,
                               test_files,
                               histograms,
-                              sys.argv[2] + "_" + HISTOGRAMS_FILE)
+                              video_name + '_' + HISTOGRAMS_FILE)
 
 def hashing_trick():
     if isfile(sys.argv[2] + "_" + HISTOGRAMS_FILE):
@@ -211,19 +203,38 @@ def hashing_trick():
     return None
 
 if __name__ == '__main__':
-    codebook_exists = False
+    codebook_exists = True
+    nclusters = 0
 
     args = sys.argv
 
-    (codebook_exists, codebook, nclusters) = gen_codebook()
+    # checking if already exist a codebook. If not, create a new codebook.
+    # ...
+    if not isfile(CODEBOOK_FILE):
+        codebook_exists = False
+        (codebook_exists, codebook, nclusters) = gen_codebook()
 
+    else:
+        print "There's a codebook. Using him"
+        content_file = open(CODEBOOK_FILE, 'r')
+        codebook = stringToNumpy(content_file)
+
+        for line in content_file:
+            nclusters = nclusters + 1
+    
+    # generating the histograms
     gen_histograms(nclusters, codebook, codebook_exists)
 
+
+    # (codebook_exists, codebook, nclusters) = gen_codebook()
+
+    # gen_histograms(nclusters, codebook, codebook_exists)
+
     # This matrix will be used by the classifier
-    hashMatrix = hashing_trick()
+    # hashMatrix = hashing_trick()
 
     # saving into a file
-    writeHashMatrixToFile(HASHMATRIX_FILE,hashMatrix)
+    # writeHashMatrixToFile(HASHMATRIX_FILE,hashMatrix)
 
     # .. plotting the histograms
 

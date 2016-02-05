@@ -63,7 +63,7 @@ def generate_dataset(f):
         cmnd = str("youtube-dl --output \"videos/" + str(counter) + ".mp4\" " + url)
         os.system(cmnd)
         counter=counter+1
-    """
+ 
 
     all_videos = []
 
@@ -71,7 +71,6 @@ def generate_dataset(f):
     if not exists(path):
         mkdir(path)
 
-    
     for fname in glob(path + "/*"):
         all_videos.extend([join(path, basename(fname))])
     
@@ -122,8 +121,23 @@ def generate_dataset(f):
 
         cap.release()
         cv2.destroyAllWindows()
+    """
+    path = "frames"
+    all_videos = []
+    if not exists(path):
+        mkdir(path)
+    for fname in glob(path + "/*"):
+        all_videos.extend([join(path, basename(fname))])
+    
 
     # Now, extracting the features for each video
+    for vid in all_videos:
+        filename = vid.split("/")
+        filename = filename[1].split(".")
+        filename = filename[0]
+
+        cmnd = "python feature_extraction.py dataset " + path + '/' + filename
+        os.system(cmnd)
 
 # extracting the class names given a folder name (dataset)
 def get_classes(datasetpath):
