@@ -108,7 +108,7 @@ def init_params(options):
                               options['n_hidden_units'])
 
     params['Wemb'] = (0.01 * randn).astype(config.floatX)
-    params = get_layer('lstm')[0](options,params,prefix='lstm')
+    params = get_layer('lstm')[0](options,params)
     # classifier
     params['U'] = 0.01 * numpy.random.randn(options['n_hidden_units'],
                                             options['ydim']).astype(config.floatX)
@@ -148,7 +148,7 @@ def ortho_weight(ndim):
     return u.astype(config.floatX)
 
 
-def param_init_lstm(options, params, prefix='lstm'):
+def param_init_lstm(options, params):
     """
     Init the LSTM parameter:
 
@@ -158,19 +158,19 @@ def param_init_lstm(options, params, prefix='lstm'):
                            ortho_weight(options['n_hidden_units']),
                            ortho_weight(options['n_hidden_units']),
                            ortho_weight(options['n_hidden_units'])], axis=1)
-    params[_p(prefix, 'W')] = W
+    params['lstm_W'] = W
     U = numpy.concatenate([ortho_weight(options['n_hidden_units']),
                            ortho_weight(options['n_hidden_units']),
                            ortho_weight(options['n_hidden_units']),
                            ortho_weight(options['n_hidden_units'])], axis=1)
-    params[_p(prefix, 'U')] = U
+    params['lstm_U'] = U
     b = numpy.zeros((4 * options['n_hidden_units'],))
-    params[_p(prefix, 'b')] = b.astype(config.floatX)
+    params['lstm_b'] = b.astype(config.floatX)
 
     return params
 
 
-def lstm_layer(tparams, state_below, options, prefix='lstm', mask=None):
+def lstm_layer(tparams, state_below, options, mask=None):
     nsteps = state_below.shape[0]
     if state_below.ndim == 3:
         n_samples = state_below.shape[1]
@@ -186,7 +186,7 @@ def lstm_layer(tparams, state_below, options, prefix='lstm', mask=None):
         return _x[:, n * dim:(n + 1) * dim]
 
     def _step(m_, x_, h_, c_):
-        preact = tensor.dot(h_, tparams[_p(prefix, 'U')])
+        preact = tensor.dot(h_, tparams['lstm_U'])
         preact += x_
 
         i = tensor.nnet.sigmoid(_slice(preact, 0, options['n_hidden_units']))
@@ -202,8 +202,8 @@ def lstm_layer(tparams, state_below, options, prefix='lstm', mask=None):
 
         return h, c
 
-    state_below = (tensor.dot(state_below, tparams[_p(prefix, 'W')]) +
-                   tparams[_p(prefix, 'b')])
+    state_below = (tensor.dot(state_below, tparams['lstm_W']) +
+                   tparams['lstm_b'])
 
     n_hidden_units = options['n_hidden_units']
     rval, updates = theano.scan(_step,
@@ -214,7 +214,7 @@ def lstm_layer(tparams, state_below, options, prefix='lstm', mask=None):
                                               tensor.alloc(numpy_floatX(0.),
                                                            n_samples,
                                                            n_hidden_units)],
-                                name=_p(prefix, '_layers'),
+                                name='lstm_layers',
                                 n_steps=nsteps)
     return rval[0]
 
@@ -297,9 +297,7 @@ def build_model(tparams, options):
     emb = tparams['Wemb'][x.flatten()].reshape([n_timesteps,
                                                 n_samples,
                                                 options['n_hidden_units']])
-    proj = get_layer('lstm')[1](tparams, emb, options,
-                                            prefix='lstm',
-                                            mask=mask)
+    proj = get_layer('lstm')[1](tparams, emb, options,mask=mask)
     
     proj = (proj * mask[:, :, None]).sum(axis=0)
     proj = proj / mask.sum(axis=0)[:, None]
