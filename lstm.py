@@ -1,6 +1,26 @@
-'''
-Build a tweet sentiment analyzer
-'''
+"""
+
+//[]------------------------------------------------------------------------[]
+//|                                                                          |
+//|                      Long-Short Term Memory Module                       |
+//|                               Version 1.0                                |
+//|                                                                          |
+//|              Copyright 2016-2020, Marcos Vinicius Teixeira               |
+//|                          All Rights Reserved.                            |
+//|                                                                          |
+//[]------------------------------------------------------------------------[]
+//
+OVERVIEW: lstm.py
+//  ================================
+//  This module implement a Long-Short Term Memory(LSTM), a Recurrent Neural
+//  Network to sequence data. 
+//  This code is an adaptation of the lstm code provided by 
+//  
+//          http://deeplearning.net/tutorial/lstm.html 
+//  
+//  for sentiment analysis.
+//
+"""
 from collections import OrderedDict
 import cPickle as pkl
 import sys

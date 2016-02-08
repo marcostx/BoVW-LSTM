@@ -22,7 +22,8 @@ from os.path import exists, isdir, basename, isfile, join, splitext
 from sklearn.feature_extraction import FeatureHasher
 import sift
 from glob import glob
-from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like, fromstring, asarray
+from numpy import zeros, resize, sqrt, histogram, hstack, vstack, savetxt, zeros_like, fromstring, asarray, array
+import numpy as np
 import scipy.cluster.vq as vq
 import matplotlib.pyplot as plt
 from cPickle import dump, HIGHEST_PROTOCOL
@@ -38,12 +39,21 @@ EXTENSIONS = [".jpg", ".bmp", ".png", ".pgm", ".tif", ".tiff"]
 PRE_ALLOCATION_BUFFER = 1000  # for sift
 
 
-def generate_dataset(f):
-    """lines = f.readlines()
+def download_videos(f):
+    """
+
+    Donwload each video according the urls into the file
+
+    Each video are saved with the number of line in file f,
+    easing to search for its class.
+    
+    """
+    lines = f.readlines()
     urls = []
     labels = []
     nmax = 10
-    counter = 0 
+    # setting the maximum number of videos that will be downloaded
+    max_videos = 100
 
     # Taking the urls and labels
     for line in lines:
@@ -55,28 +65,28 @@ def generate_dataset(f):
         counter=counter+1
     
     counter=0
-    if not exists("videos/"):
-        mkdir("videos/")
+    path = "videos"
+    if not exists(path):
+        mkdir(path)
 
     # Dowloading the videos by url ( Ps.: the videos aare saved with its line position on the file)
     for url in urls:
         cmnd = str("youtube-dl --output \"videos/" + str(counter) + ".mp4\" " + url)
         os.system(cmnd)
         counter=counter+1
- 
 
     all_videos = []
 
-    path = "videos"
-    if not exists(path):
-        mkdir(path)
-
+    # Getting each video name
     for fname in glob(path + "/*"):
         all_videos.extend([join(path, basename(fname))])
     
     path = "frames"
     if not exists(path):
         mkdir(path)
+
+    # Computing the frames sequence for each video.
+    # Saving into frames/ folder
 
     for vid in (all_videos):
         vname = vid
@@ -121,8 +131,8 @@ def generate_dataset(f):
 
         cap.release()
         cv2.destroyAllWindows()
-    """
 
+def generate_dataset(f):
     histograms_path = "histograms"
 
     # Extract the histograms (if necessary ..)
@@ -169,11 +179,21 @@ def generate_dataset(f):
         lines = histofile.readlines()
 
         for i in range(len(lines)):
-            lines[i] = asarray(lines[i])
+            #lines[i] = asarray(lines[i])
             X.append(lines[i])
             Y.append(label)
 
         histofile.close()
+
+    for i in range(len(X)):
+        splited = X[i].split(" ")
+        splited_float = []
+        for index in range(len(splited)-1):
+            splited_float.append(splited[index])
+        X[i] = np.array(splited_float,dtype='float')
+
+    X = asarray(X)
+    Y = map(int,Y)
 
     return X, Y
             
