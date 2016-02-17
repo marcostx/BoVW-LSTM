@@ -28,6 +28,7 @@ def doc():
 
 import numpy as np
 import cv2
+import time
 import sys
 from os import mkdir
 from os.path import splitext, exists
@@ -40,6 +41,10 @@ clss = sys.argv[1]
 # getting the name of video
 vname = sys.argv[2]
 
+path = "frames"
+if not exists(path):
+    mkdir(path)
+
 # Opening the video
 cap = cv2.VideoCapture(vname)
 
@@ -47,12 +52,19 @@ cap = cv2.VideoCapture(vname)
 frames_ = []
 
 # Reading the video
+print " Processing " + vname + " ... "
+start = time.time()
 while(cap.isOpened()):
     ret, frame = cap.read()
-    if ret == False:
-    	break
 
-    frames_.append(frame)
+    interval = time.time()
+    if ret == False:
+        break
+
+    # 0.5 second window to take a frame
+    if (interval - start) > 0.5:
+        frames_.append(frame)
+        start = interval
 
     # Show the frame
     cv2.imshow('frame',frame)
@@ -60,14 +72,21 @@ while(cap.isOpened()):
         break
 
 frame_count = 0
-if not exists(clss):
-    mkdir(clss)
 
-filename = splitext(vname)[0]
+filename = vname.split("/")
+filename = filename[-1].split(".")
+filename = filename[0]
+
+if not exists(path + '/' + clss ):
+    mkdir(path + '/' + clss )
+
+if not exists(path + '/' + clss + '/' + filename):
+    mkdir(path + '/' + clss + '/' + filename)
+
     
 for i in frames_:
-	cv2.imwrite(clss + '/' + filename + str(frame_count) + '.png',i)
-	frame_count+=1
+    cv2.imwrite(path + '/' + clss + '/' + filename + '/' + filename + '_' + str(frame_count) + '.png',i)
+    frame_count+=1
 
 cap.release()
 cv2.destroyAllWindows()

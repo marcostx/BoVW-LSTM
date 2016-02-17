@@ -83,7 +83,7 @@ def feature_hashing(features, size_f=100):
 # Generating the codebook of visual words
 # ..
 def gen_codebook():
-    if len(sys.argv) < 3 or len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print"Usage: ./feature_extraction dataset_path video_sequence_path"
         exit(1)
 

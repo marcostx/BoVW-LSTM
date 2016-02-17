@@ -17,58 +17,54 @@ OVERVIEW: lstm.py
 //  provided by pybrain for sequence classification.
 //
 """
+
 from __future__ import print_function
-
-
-from pylab import plot, hold, show
-from scipy import sin, rand, arange
-from pybrain.datasets            import SequenceClassificationDataSet
-from pybrain.structure.modules   import LSTMLayer, SoftmaxLayer
-from pybrain.supervised          import BackpropTrainer
-from pybrain.tools.validation    import testOnSequenceData
-from pybrain.tools.shortcuts     import buildNetwork
-import sys
+import numpy as np
+#np.set_printoptions(threshold=np.nan)
+np.random.seed(1337)  # for reproducibility
 import common
+from keras.preprocessing import sequence
+from keras.utils import np_utils
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.embeddings import Embedding
+from keras.layers.recurrent import LSTM
+from keras.datasets import imdb
 
+max_features = 20000
+maxlen = 100  # cut texts after this number of words (among top max_features most common words)
+batch_size = 32
 
-# Dimension of each position of the vector X
-X_DIM = 1322
+print('Loading data...')
+(X_train, y_train) = common.generate_ucf_dataset('UCF-101/')
 
-# Number of classes
-N_CLASSES = 487
+print(len(X_train), 'train sequences')
 
-if __name__ == '__main__':
+print("Pad sequences (samples x time)")
+X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
+print('X_train shape:', X_train.shape)
 
-	if len(sys.argv) < 2:
-		print ("Usage: python simple_lstm.py trainset_file")
-		raise "Missing params"
+print('Build model...')
+model = Sequential()
+model.add(Embedding(max_features, 128, input_length=maxlen))
+model.add(LSTM(128))  # try using a GRU instead, for fun
+model.add(Dropout(0.5))
+model.add(Dense(1))
+model.add(Activation('softmax'))
 
-	f = open(sys.argv[1])
-	X, Y = common.generate_dataset(f)
+# try using different optimizers and different optimizer configs
+model.compile(loss='categorical_crossentropy',
+              optimizer='sgd',
+              class_mode="categorical")
 
-	# Constructing the train data
-	trndata = SequenceClassificationDataSet(X_DIM,1,nb_classes=N_CLASSES)
-	for i in range(len(X)):
-		trndata.newSequence()
+print("Train...")
+model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=3,show_accuracy=True)
+score, acc = model.evaluate(X_train, y_train,
+                            batch_size=batch_size,
+                            show_accuracy=True)
+predicted = model.predict(X_train)
+print('Test score:', score)
+print('Test accuracy:', acc)
+print('prediction = ', predicted)
+print('y =',y_train[40])
 
-		trndata.addSample(X[i],Y[i])
-
-	trndata._convertToOneOfMany( bounds=[0.,1.] )
-
-	# construct LSTM network
-	rnn = buildNetwork( trndata.indim, 5, trndata.outdim, hiddenclass=LSTMLayer, outclass=SoftmaxLayer, outputbias=False, recurrent=True)
-
-	# define a training method
-	trainer = BackpropTrainer( rnn, dataset=trndata, verbose=True, momentum=0.9, learningrate=0.00001 )
-
-	# Training the network
-	for i in range(100):
-	    trainer.trainEpochs(5)
-	    trnresult = 100. * (1.0-testOnSequenceData(rnn, trndata))
-	    print("train error: %5.2f%%" % trnresult)
-
-	# optional plot
-	plot(trndata['input'],'-o')
-	hold(True)
-	plot(trndata['target'])
-	show()

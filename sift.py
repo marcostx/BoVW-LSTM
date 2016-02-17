@@ -22,7 +22,12 @@ def process_image(imagename,resultname,params="--edge-thresh 10 --peak-thresh 5"
 def read_features_from_file(filename):
     """ read feature properties and return in matrix form"""
     f = loadtxt(filename)
-    return f[:,:4],f[:,4:] # feature locations, descriptors
+    if os.stat(filename).st_size > 0 and len(f.shape) > 1:
+        return f[:,:4],f[:,4:]  # feature locations, descriptors
+    if os.stat(filename).st_size > 0 and len(f.shape) == 1:
+        return f[:4],f[4:]      # feature locations, descriptors
+    else:
+        return np.zeros(0),np.zeros(0)
 
 
 def write_features_to_file(filename,locs,desc):
