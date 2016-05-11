@@ -1,8 +1,8 @@
-from __future__ import print_function
+    from __future__ import print_function
 
 #!/usr/bin/env python
-# Example script for recurrent network usage in PyBrain.
-__author__ = "Martin Felder"
+# LSTM
+__author__ = "Marcos Teixeira"
 __version__ = '$Id$'
 
 import common
@@ -30,11 +30,11 @@ from sklearn.metrics import precision_score,recall_score,accuracy_score,f1_score
 DS = common.generate_ucf_dataset('frames')
 X, y = DS
 
-
 precision= []
 recall   = []
 f1       = []
 accuracy = []
+
 stf = StratifiedKFold(y, n_folds=10)
 for train_index, test_index in stf:    
     X_train = []

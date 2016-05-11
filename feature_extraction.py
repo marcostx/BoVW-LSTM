@@ -149,7 +149,7 @@ def gen_histograms(nclusters,codebook,codebook_exists):
         exit(1)
     
     video_name = sys.argv[2].split("/")
-    video_name = video_name[1].split(".")
+    video_name = video_name[-1].split(".")
     video_name = video_name[0]
 
     test_files = []
@@ -219,6 +219,7 @@ if __name__ == '__main__':
         (codebook_exists, codebook, nclusters) = gen_codebook()
 
     else:
+
         print "There's a codebook. Using him"
         content_file = open(CODEBOOK_FILE, 'r')
         codebook = stringToNumpy(content_file)

@@ -207,7 +207,7 @@ def generate_ucf_dataset(datasetpath):
         histofile = open(hist_f)
         lines = histofile.readlines()
 
-        label = targets_ucf[basename(hist_f.split("_")[0])]
+        label = targets_ucf[basename(hist_f.split("_")[1])]
 
         for i in range(len(lines)):
             X.append(lines[i])
