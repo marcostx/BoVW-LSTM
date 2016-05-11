@@ -146,8 +146,10 @@ def process_ucf_dataset(datasetpath):
         all_classes.extend([join(datasetpath, basename(cl))])
 
     count_vid = 0
+    # Getting each video name
     for i in range(len(all_classes)):
         for vid in glob(all_classes[i] + "/*"):
+
             if count_vid >= maxvideos_infolder:
                 break
 
@@ -155,6 +157,7 @@ def process_ucf_dataset(datasetpath):
             count_vid += 1
         count_vid=0
 
+    # Getting the frames for each video, using the script 'process_video.py'
     for vid in all_videos:
         cl = vid.split("/")[-2]
         # Taking the frames ..
@@ -164,24 +167,25 @@ def process_ucf_dataset(datasetpath):
 
 def generate_ucf_dataset(datasetpath):
     histograms_path = "histograms"
+    all_classes = []
+    # Getting each class name
+    for cl in glob(path + "/*"):
+        all_classes.extend([join(datasetpath, basename(cl))])
+
 
     # Extract the histograms (if necessary ..)
     if not exists(histograms_path):
         path = "frames"
 
-        all_classes = []
-        all_videos = []
 
-        # Getting each class name
-        for cl in glob(path + "/*"):
-            all_classes.extend([join(path, basename(cl))])
-
+        all_videos =  []
+        
+        # Getting each video name
         for i in range(len(all_classes)):
             for vid in glob(all_classes[i] + "/*"):
                 all_videos.extend([join(all_classes[i], basename(vid))]) 
 
         # Now, extracting the features for each video
-        
         for vid in all_videos:
 
             cmnd = "python feature_extraction.py dataset " + vid
@@ -190,19 +194,19 @@ def generate_ucf_dataset(datasetpath):
     X = []
     Y = []
 
-    all_classes = []
-    for cl in glob(datasetpath + "/*"):
-        all_classes.extend([join(datasetpath, basename(cl))])
-
     # fitting target vector
     for i in range(len(all_classes)):
         targets_ucf[basename(all_classes[i])] = i
 
     trainset_path = "histograms"
+
+    # getting the histograms names
     hist_files = []
     for tname in glob(trainset_path + "/*"):
         hist_files.extend([join(trainset_path, basename(tname))])
 
+    # Now we'll open each histogram and fill the X and Y vector. The line will be
+    # the X value and the Y the value in the name position at targets_ucf vector.
     for hist_f in hist_files:
         histofile = open(hist_f)
         lines = histofile.readlines()
@@ -224,6 +228,8 @@ def generate_ucf_dataset(datasetpath):
         X[i] = np.asarray(splited_float,dtype='float')
 
     return X, Y
+
+
 
 def generate_dataset(filename):
     f = open(filename)
@@ -314,6 +320,7 @@ def get_imgfiles(path):
                     if splitext(fname)[-1].lower() in EXTENSIONS])
     return all_files
 
+
 # calculate the sift descriptor for each image of a input array. The output
 # is saved with the same name of image file plus '.sift'
 def extractSift(input_files):
@@ -331,18 +338,19 @@ def extractSift(input_files):
         locs, descriptors = sift.read_features_from_file(features_fname)
         
         # check if there is description for the image
-        if len(descriptors)>0:
+        if len(descriptors) > 0:
             print descriptors.shape
             all_features_dict[fname] = descriptors
 
     return all_features_dict
 
-# transforming a dict in a numpy array
+# Transforming a dict in a numpy array
 # ...
 def dict2numpy(dict):
     nkeys = len(dict)
     array = zeros((nkeys * PRE_ALLOCATION_BUFFER, 128))
     pivot = 0
+    
     for key in dict.keys():
         value = dict[key]
         nelements = value.shape[0]

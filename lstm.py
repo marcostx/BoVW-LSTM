@@ -1,9 +1,26 @@
-    from __future__ import print_function
+"""
+
+//[]------------------------------------------------------------------------[]
+//|                                                                          |
+//|                         Long-Short Term Module                           |
+//|                               Version 1.0                                |
+//|                                                                          |
+//|              Copyright 2016-2020, Marcos Vinicius Teixeira               |
+//|                          All Rights Reserved.                            |
+//|                                                                          |
+//[]------------------------------------------------------------------------[]
+//
+//  OVERVIEW: LSTM.py
+//  ========
+//  
+//  
+"""
+
+
+from __future__ import print_function
 
 #!/usr/bin/env python
 # LSTM
-__author__ = "Marcos Teixeira"
-__version__ = '$Id$'
 
 import common
 import pickle
@@ -26,15 +43,18 @@ from pybrain.tools.customxml.networkreader import NetworkReader
 from sklearn.metrics import precision_score,recall_score,accuracy_score,f1_score,roc_auc_score
 
 
-# create training and test data
+# Creating training and test data
 DS = common.generate_ucf_dataset('frames')
 X, y = DS
 
+# metric vars 
 precision= []
 recall   = []
 f1       = []
 accuracy = []
 
+
+# Using stratified cross-validation 
 stf = StratifiedKFold(y, n_folds=10)
 for train_index, test_index in stf:    
     X_train = []
@@ -49,8 +69,14 @@ for train_index, test_index in stf:
     for x in test_index:
         X_test.append(X[x])
         y_test.append(y[x])
-    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3)
+    
 
+
+    # SequenceClassificationDataset(inp,target, nb_classes)
+    # inp = input dimension
+    # target = number of targets
+    # nb_classes = number of classes
     trndata = SequenceClassificationDataSet(100,1, nb_classes=2)
     tstdata = SequenceClassificationDataSet(100,1, nb_classes=2)
 
@@ -70,25 +96,30 @@ for train_index, test_index in stf:
         rnn = buildNetwork( trndata.indim, 5, trndata.outdim, hiddenclass=LSTMLayer, outclass=SoftmaxLayer, outputbias=False, recurrent=True)
 
     # define a training method
-    #trainer = RPropMinusTrainer( rnn, dataset=trndata, verbose=True )
-    # instead, you may also try
     trainer = BackpropTrainer( rnn, dataset=trndata, momentum=0.1, weightdecay=0.01)
 
-    # carry out the training
+    # lets training (exclamation point)
     for i in range(100):
+    	# setting the ephocs for the training
         trainer.trainEpochs( 2 )
+        # calculating the error
         trnresult = (1.0-testOnSequenceData(rnn, trndata))
         tstresult = (1.0-testOnSequenceData(rnn, tstdata))
         #print("train error: %5.2f%%" % trnresult, ",  test error: %5.2f%%" % tstresult)
 
+        # activating the softmax layer
         out = rnn.activate(X_train[0])
         out = out.argmax(axis=0)
 
+    
     index=0
+
+    # evaluate the net in test data
     result = []
     for x in X_test:
     	result.append(rnn.activate(x).argmax())
 
+    # filling the metrics values
     mresult = confusion_matrix(y_test,result)
     precision.append((precision_score(y_test,result)))
     recall.append((recall_score(y_test,result)))
@@ -100,7 +131,7 @@ for train_index, test_index in stf:
 
     
         
-
+# printing the results
 print ("precision %4.2f,%4.2f"%(np.mean(precision),np.std(precision)))
 print ("recall    %4.2f,%4.2f"%(np.mean(recall),np.std(recall)))
 print ("f1        %4.2f,%4.2f"%(np.mean(f1),np.std(f1)))
